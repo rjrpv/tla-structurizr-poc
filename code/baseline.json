@@ -1,0 +1,17 @@
+{
+  "intake": [
+    "serving"
+  ],
+  "inventory": [],
+  "ledger": [],
+  "serving": [
+    "inventory",
+    "ledger"
+  ],
+  "system": [
+    "intake",
+    "inventory",
+    "ledger",
+    "serving"
+  ]
+}
