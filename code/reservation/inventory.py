@@ -20,3 +20,9 @@ class Inventory:
         if not self.has_stock():
             raise RuntimeError("cannot sell: no stock")
         self.stock -= 1
+
+    def restock_one(self) -> None:
+        """Return a ticket to stock (TLA+ ``Cancel``: inventory' = inventory + 1)."""
+        if self.stock >= self.max_inventory:
+            raise RuntimeError("cannot restock: stock already at capacity")
+        self.stock += 1

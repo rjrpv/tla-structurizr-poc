@@ -96,6 +96,30 @@ def diff_graph(base: dict, live: dict) -> dict:
     }
 
 
+def render_mermaid(diff: dict, live: dict) -> str:
+    """Render the live dependency graph as a mermaid diagram.
+
+    Added modules/edges (vs the baseline) are highlighted so the structural
+    delta is visible at a glance. GitHub renders ```mermaid blocks natively.
+    """
+    added_mods = set(diff["modules_added"])
+    added_edges = {tuple(e.split(" -> ")) for e in diff["edges_added"]}
+    lines = ["```mermaid", "graph LR"]
+    link_index = {}  # (from, to) -> declaration index (mermaid linkStyle needs this)
+    for m, deps in sorted(live.items()):
+        for d in deps:
+            link_index[(m, d)] = len(link_index)
+            lines.append(f"    {m} --> {d}")
+    lines.append("    classDef added fill:#12261e,stroke:#3fb950,color:#3fb950,stroke-width:2px")
+    for m in sorted(added_mods):
+        lines.append(f"    class {m} added")
+    for (a, b), idx in sorted(link_index.items(), key=lambda kv: kv[1]):
+        if (a, b) in added_edges:
+            lines.append(f"    linkStyle {idx} stroke:#3fb950,stroke-width:2px")
+    lines.append("```")
+    return "\n".join(lines)
+
+
 def render_markdown(diff: dict, live: dict) -> str:
     changed = any(diff[k] for k in diff)
     if not changed:
@@ -105,6 +129,8 @@ def render_markdown(diff: dict, live: dict) -> str:
             f"{sum(len(v) for v in live.values())} edges."
         )
     lines = ["### Architecture observation", "", "_Observation only — not a gate._", ""]
+    lines.append(render_mermaid(diff, live))
+    lines.append("")
     if diff["modules_added"]:
         lines.append("**New modules**")
         lines += [f"- `{m}`" for m in diff["modules_added"]]

@@ -1,19 +1,23 @@
-"""ReservationSystem: wires the four modules together.
+"""ReservationSystem: wires the five modules together.
 
 Dependency direction (as observed by pydeps):
 
     intake -> serving -> inventory
                        -> ledger
+    cancellation -> inventory
+                 -> ledger
 
 The public API mirrors the TLA+ actions:
 
     Request(c)  ->  request(c)
     Serve       ->  serve()
+    Cancel(c)   ->  cancel(c)
 
 ``snapshot()`` returns the TLA+ state as a dict so tests can compare it
 against the model and check the invariants.
 """
 
+from .cancellation import Cancellation
 from .inventory import Inventory
 from .intake import RequestIntake
 from .ledger import Ledger
@@ -29,6 +33,7 @@ class ReservationSystem:
         self.ledger = Ledger()
         self.serving = ServingLogic(self.inventory, self.ledger)
         self.intake = RequestIntake(self.customers, self.serving)
+        self.cancellation = Cancellation(self.inventory, self.ledger)
 
     # -- TLA+ Request(c) -------------------------------------------------
     def request(self, customer: str) -> None:
@@ -42,6 +47,11 @@ class ReservationSystem:
             raise RuntimeError("no pending request to serve")
         return self.intake.serve_next(customer)
 
+    # -- TLA+ Cancel(c) --------------------------------------------------
+    def cancel(self, customer: str) -> None:
+        """A sold customer cancels; the ticket returns to stock."""
+        self.cancellation.cancel(customer)
+
     # -- state -----------------------------------------------------------
     def snapshot(self) -> dict:
         """The TLA+ state as a dict (for invariant checks / model mirroring)."""
@@ -50,7 +60,7 @@ class ReservationSystem:
             "pending": frozenset(self.intake.pending),
             "sold": frozenset(self.ledger.sold),
             "rejected": frozenset(self.ledger.rejected),
-            "soldCount": self.ledger.sold_count,
+            "canceled": frozenset(self.ledger.canceled),
         }
 
     @property
