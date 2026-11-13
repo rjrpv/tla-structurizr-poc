@@ -1,4 +1,8 @@
 {
+  "cancellation": [
+    "inventory",
+    "ledger"
+  ],
   "intake": [
     "serving"
   ],
@@ -9,6 +13,7 @@
     "ledger"
   ],
   "system": [
+    "cancellation",
     "intake",
     "inventory",
     "ledger",
