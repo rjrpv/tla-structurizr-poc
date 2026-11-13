@@ -1,4 +1,4 @@
-"""Ledger container.
+"""Ledger module.
 
 Owns the TLA+ state variables ``sold``, ``rejected`` and ``soldCount``.
 """

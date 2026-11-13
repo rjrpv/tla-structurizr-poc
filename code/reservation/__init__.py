@@ -14,8 +14,9 @@ Mirrors the TLA+ spec in ../../tla/ReservationSystem.tla:
     Request(c)             ->  ReservationSystem.request(c)
     Serve                  ->  ReservationSystem.serve(c=None)
 
-The module layout mirrors the Structurizr containers in
-../../structurizr/reservation.dsl (intake, serving, inventory, ledger).
+The module layout (intake, serving, inventory, ledger) is the unit of
+architecture observation: ``code/observe.py`` runs pydeps over it and
+diffs the graph against ``code/baseline.json``.
 """
 
 from .system import ReservationSystem

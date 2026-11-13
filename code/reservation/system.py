@@ -1,6 +1,6 @@
-"""ReservationSystem: wires the four containers together.
+"""ReservationSystem: wires the four modules together.
 
-Dependency direction (matches structurizr/reservation.dsl):
+Dependency direction (as observed by pydeps):
 
     intake -> serving -> inventory
                        -> ledger

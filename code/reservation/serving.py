@@ -1,10 +1,9 @@
-"""Serving Logic container.
+"""Serving Logic module.
 
 Implements the TLA+ ``Serve`` decision: given a customer, sell a ticket
 if stock remains, else reject. It is a pure decision over the inventory
-and ledger — it does not own the queue (that is the intake's job), which
-is why its dependencies are ``serving -> inventory`` and
-``serving -> ledger`` in the Structurizr model.
+and ledger — it does not own the queue (that is the intake's job), so in
+the pydeps dependency graph it points only at ``inventory`` and ``ledger``.
 """
 
 from .inventory import Inventory

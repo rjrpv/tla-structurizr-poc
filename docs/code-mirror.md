@@ -1,20 +1,22 @@
-# Making the Specs Mirror the Code
+# Making the Spec Mirror the Code
 
 This is the follow-up to [comparison.md](comparison.md). The PoC showed TLA+ and
-Structurizr describing the *same* system at two abstractions. This document
-closes the loop: it adds a **Python reference implementation** and a set of
-**tests that check the code against both specs**, so the "mirror" is enforced
-by the build rather than by convention.
+pydeps describing the *same* system at two abstractions. This document closes
+the loop: it adds a **Python reference implementation** and a set of **tests
+that check the code against the spec**, so the "mirror" is enforced by the
+build rather than by convention.
 
 The guiding idea: **the spec is the source of truth; the code is a candidate
 implementation; the tests are the bridge that proves the candidate matches.**
+For structure, the mode is *observation*, not control: pydeps reveals the
+code's dependency graph and a committed baseline records what we last saw.
 
 ## What was added
 
 ```
 code/
 ├── reservation/                 # the reference implementation
-│   ├── system.py                # ReservationSystem — wires the 4 containers
+│   ├── system.py                # ReservationSystem — wires the 4 modules
 │   ├── intake.py                # RequestIntake  (owns `pending`)
 │   ├── serving.py               # ServingLogic   (the sell/reject decision)
 │   ├── inventory.py             # Inventory      (owns `inventory`)
@@ -22,14 +24,13 @@ code/
 ├── tests/
 │   ├── test_invariants.py       # property-based: TLA+ invariants on the code
 │   ├── test_state_space_mirror.py  # BFS the code; assert 29 states == TLC
-│   └── test_architecture.py     # import graph == Structurizr edges
-├── generate_dsl.py              # code -> Structurizr DSL (the "flip")
+│   └── test_architecture.py     # well-formedness: no cycles + baseline in sync
+├── observe.py                   # pydeps-based architecture observer
+├── baseline.json                # the committed dependency graph (last observed)
 └── requirements.txt
-structurizr/
-└── generated_from_code.dsl      # the model DERIVED from the code
 ```
 
-## The three bridges
+## The bridges
 
 ### 1. Behavior: TLA+ invariants → property-based tests
 
@@ -64,86 +65,46 @@ the spec can't, the count (or an invariant) diverges and the test fails. This
 is as close as you get to "the code is proven to match the spec" without
 writing the system in a verification language.
 
-### 3. Structure: Structurizr edges → architecture tests
+### 3. Structure: the pydeps graph, observed against a baseline
 
-`tests/test_architecture.py` is the Python equivalent of an ArchUnit/NDepend
-rule. It statically reads the imports in `code/reservation/` and asserts the
-dependency direction matches `structurizr/reservation.dsl`:
-
-```
-intake    -> serving      (RequestIntake drives ServingLogic)
-serving   -> inventory    (ServingLogic reads/decrements Inventory)
-serving   -> ledger       (ServingLogic records in the Ledger)
-```
-
-plus: data containers (`inventory`, `ledger`) are dependency-free, and the
-graph is a DAG (no cycles). A structural mistake — an inverted dependency, a
-new cycle — fails the build.
-
-## The flip: generating the model from the code
-
-`code/generate_dsl.py` statically analyzes `code/reservation/` (classes →
-containers, `from .X import` → edges) and emits
-`structurizr/generated_from_code.dsl` — a model **derived from the code**, not
-hand-written. Because it's derived, it can't drift: change the imports, re-run,
-and the model changes with them.
-
-Running it and validating:
+Structure is *observed*, not enforced. `code/observe.py` runs pydeps over
+`code/reservation/` to get the live dependency graph, then diffs it against
+`code/baseline.json` — the graph as of the last time we looked.
 
 ```
-$ python3 code/generate_dsl.py
-  containers: Request Intake, Inventory, Ledger, Serving Logic
-  relationships: 3
-
-$ structurizr validate -w structurizr/generated_from_code.dsl
-  (valid)
+$ python3 code/observe.py
+### Architecture observation
+_Observation only — not a gate._
+**New modules**
+- `notifications`
+**New dependencies**
+- `serving -> notifications`
+_To accept this as the new baseline: `python3 code/observe.py --save-baseline`_
 ```
 
-The generated model:
+The baseline is a plain JSON file you own; the diff between it and the live
+graph is the unit of observation. When the code changes, you *see* it and
+decide: accept it (`--save-baseline`) or fix the code (and the observation
+converges back). Nothing blocks the build — for a project being bootstrapped,
+the goal is to course-correct, not to define boundary conditions.
 
-```
-intake -> serving
-serving -> inventory
-serving -> ledger
-```
-
-## The drift check: intended vs actual
-
-Now we have two models of the *same* system:
-
-- **intended** — `structurizr/reservation.dsl` (hand-written, the design)
-- **actual** — `structurizr/generated_from_code.dsl` (derived from the code)
-
-Diffing their container sets and edges:
-
-```
-intended:  intake->serving, serving->inventory, serving->ledger
-actual:    intake->serving, serving->inventory, serving->ledger
-DRIFT CHECK: PASS — code-derived model matches the intended model exactly.
-```
-
-This is the structural analogue of the state-space mirror: the *actual*
-architecture (from code) matches the *intended* architecture (the design).
-
-## A note on the bundled CLI
-
-The `structurizr-cli` `inspect` command is for **workspace validation** (model
-quality checks), not source-code analysis, and the bundled `structurizr-import`
-jar ships only documentation/diagram importers — no Python code analyzer. So
-the "flip" here is a small purpose-built generator (`generate_dsl.py`) rather
-than a one-shot CLI import. For larger codebases the same idea maps onto
-dedicated tools: Structurizr's code import (Java/C#/JS/TS/Go), or
-`dependency-cruiser`/`jdeps`/`pydeps` for the dependency graph.
+`tests/test_architecture.py` is the lightweight CI companion: it asserts the
+module graph is a DAG (no import cycles), that the system wires all four
+modules, and that the committed baseline is in sync with the live graph. The
+last check is the observation-mode hygiene rule — it doesn't forbid the code
+from changing, it just makes sure the baseline (what we last observed) is
+current. If the code moved, the test points you at `observe.py --save-baseline`.
 
 ## Running it all
 
 ```sh
 cd code
 python3 -m pip install -r requirements.txt
-python3 -m pytest -q          # 13 tests: invariants, state-space mirror, architecture
+python3 -m pytest -q          # 11 tests: invariants, state-space mirror, well-formedness
 
-python3 generate_dsl.py       # regenerate the model from the code
-# then validate: structurizr validate -w ../structurizr/generated_from_code.dsl
+python3 observe.py            # diff the live graph vs the baseline
+python3 observe.py --pr 2     # post the observation as a PR comment
+python3 observe.py --save-baseline   # accept the current state as the baseline
 ```
 
 ## Bottom line
@@ -152,10 +113,10 @@ python3 generate_dsl.py       # regenerate the model from the code
 |------|------|----------------|
 | TLA+ invariants | Python impl | property-based tests (Hypothesis) |
 | TLA+ state space (29 states) | Python impl | BFS state-space mirror test |
-| Structurizr edges | Python imports | architecture test (import graph) |
-| intended model | actual model | code→DSL generation + diff |
+| module structure | Python imports | pydeps graph vs committed baseline (`observe.py`) |
 
-The specs and the code now *check each other* in both directions — behavior
-via the invariants and state space, structure via the import graph and the
-generated-model diff. That is the practical answer to "how do I know the spec
-still mirrors the code?" — you don't trust it, you **test it**.
+The spec and the code now *check each other* — behavior via the invariants and
+state space (control: the spec is proven), structure via the pydeps graph and
+baseline (observation: the structure is revealed and watched). That is the
+practical answer to "how do I know the spec still mirrors the code?" — for
+behavior you **prove** it; for structure you **observe** it.

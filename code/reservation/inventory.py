@@ -1,4 +1,4 @@
-"""Inventory container.
+"""Inventory module.
 
 Owns the TLA+ state variable ``inventory`` (tickets in stock).
 """

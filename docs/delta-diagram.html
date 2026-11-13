@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Code → DSL delta</title>
+<title>Code → graph delta (pydeps)</title>
 <style>
   :root{
     --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2b3240;
@@ -57,27 +57,27 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Code → DSL delta, advertised in the PR</h1>
-  <p class="sub">When a PR changes <span class="kbd">code/reservation/</span>, CI regenerates the model, diffs it against the committed DSL, and posts the delta. You review <em>what changed in the architecture</em>, not the code.</p>
+  <h1>Code → graph delta, observed with pydeps</h1>
+  <p class="sub">When a PR changes <span class="kbd">code/reservation/</span>, <span class="kbd">observe.py</span> runs pydeps, diffs the live graph against the committed <span class="kbd">baseline.json</span>, and posts the delta. <strong>Observation only — it never blocks the PR.</strong></p>
 
   <h2>The pipeline (all Python, all open source)</h2>
   <div class="flow">
     <div class="step"><div class="n">01</div><div class="t">PR changes code</div><div class="d">imports / modules edited</div></div>
     <div class="arrow">→</div>
-    <div class="step"><div class="n">02</div><div class="t">Regenerate</div><div class="d">generate_dsl.py → actual.dsl</div></div>
+    <div class="step"><div class="n">02</div><div class="t">pydeps</div><div class="d">live graph (JSON)</div></div>
     <div class="arrow">→</div>
-    <div class="step hi"><div class="n">03</div><div class="t">Diff vs committed</div><div class="d">intended.dsl − actual.dsl</div></div>
+    <div class="step hi"><div class="n">03</div><div class="t">Diff vs baseline</div><div class="d">baseline.json − live</div></div>
     <div class="arrow">→</div>
-    <div class="step"><div class="n">04</div><div class="t">Classify</div><div class="d">expected vs violation</div></div>
+    <div class="step"><div class="n">04</div><div class="t">Observe</div><div class="d">markdown + JSON, exit 0</div></div>
     <div class="arrow">→</div>
-    <div class="step"><div class="n">05</div><div class="t">Advertise</div><div class="d">PR comment + gate</div></div>
+    <div class="step"><div class="n">05</div><div class="t">Advertise</div><div class="d">PR comment (no gate)</div></div>
   </div>
 
   <h2>The delta (example: a PR adds a <span class="kbd">notifications</span> module and an inverted edge)</h2>
   <div class="row">
     <div class="col card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span class="tag">intended (committed)</span><span class="tag">actual (from code)</span>
+        <span class="tag">baseline (committed)</span><span class="tag">live (from code)</span>
       </div>
       <svg viewBox="0 0 320 250" role="img" aria-label="dependency graph">
         <defs>
@@ -91,7 +91,7 @@
         <line x1="225" y1="82" x2="255" y2="150" stroke="#5b6675" stroke-width="1.6" marker-end="url(#a)"/>
         <!-- delta: new edge serving->notifications (green) -->
         <line x1="235" y1="80" x2="270" y2="196" stroke="#3fb950" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#g)"/>
-        <!-- delta: violation ledger->serving (red) -->
+        <!-- delta: inverted edge ledger->serving (red, a defect) -->
         <path d="M255,172 C 285,140 285,110 250,90" fill="none" stroke="#f85149" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#r)"/>
         <!-- nodes -->
         <g font-family="ui-monospace,monospace" font-size="12">
@@ -104,53 +104,50 @@
         </g>
       </svg>
       <div class="legend">
-        <span><i class="dot" style="background:#5b6675"></i>unchanged</span>
-        <span><i class="dot" style="background:#3fb950"></i>added (expected)</span>
-        <span><i class="dot" style="background:#f85149"></i>added (violates intended)</span>
+        <span><i class="dot" style="background:#5b6675"></i>in baseline</span>
+        <span><i class="dot" style="background:#3fb950"></i>added (observed)</span>
+        <span><i class="dot" style="background:#f85149"></i>added (a defect: inverted)</span>
       </div>
     </div>
 
     <div class="col">
       <div class="card" style="height:100%">
-        <div style="font-size:12px;color:var(--dim);margin-bottom:8px">generated_from_code.dsl — diff vs committed</div>
-<pre><span class="ctx">        reservation = softwareSystem "Reservation System" {</span>
-<span class="ctx">            intake = container "Request Intake" ...</span>
-<span class="ctx">            inventory = container "Inventory" ...</span>
-<span class="ctx">            ledger = container "Ledger" ...</span>
-<span class="ctx">            serving = container "Serving Logic" ...</span>
-<span class="add">+           notifications = container "Notifications" "notifications.py (Notifier)"</span>
-<span class="ctx">        }</span>
-<span class="ctx">        customers -> reservation "requests a ticket"</span>
-<span class="ctx">        intake -> serving "imports"</span>
-<span class="ctx">        serving -> inventory "imports"</span>
-<span class="ctx">        serving -> ledger "imports"</span>
-<span class="add">+       serving -> notifications "imports"</span>
-<span class="add">+       ledger -> serving "imports"   ⚠ cycle / inverted</span></pre>
-        <p class="note">The diff is the unit of review. A <span style="color:var(--ok)">green</span> line is a new piece of architecture; a <span style="color:var(--bad)">red</span> line is a change that breaks the intended model.</p>
+        <div style="font-size:12px;color:var(--dim);margin-bottom:8px">baseline.json — diff vs live graph</div>
+<pre><span class="ctx">  "intake":    ["serving"],</span>
+<span class="ctx">  "inventory": [],</span>
+<span class="ctx">  "ledger":    [],</span>
+<span class="ctx">  "serving":   ["inventory", "ledger"],</span>
+<span class="ctx">  "system":    ["intake", "inventory", "ledger", "serving"]</span>
+<span class="add">+ "notifications": []</span>
+<span class="add">+ "serving":   ["inventory", "ledger", "notifications"]</span>
+<span class="add">+ "ledger":    ["serving"]        ⚠ inverted edge</span></pre>
+        <p class="note">The diff is the unit of observation. A <span style="color:var(--ok)">green</span> line is new structure the code gained; a <span style="color:var(--bad)">red</span> line is something worth a second look (a cycle or inverted dependency). Neither blocks the PR.</p>
       </div>
     </div>
   </div>
 
   <h2>What lands in the PR</h2>
   <div class="pr">
-    <div class="head"><div class="ic">⚠</div><div>Architecture check <span class="tag bad">changes detected</span></div></div>
+    <div class="head"><div class="ic">◎</div><div>Architecture observation <span class="tag ok">no gate</span></div></div>
     <div class="body">
-      <div class="who">architecture-bot · on <span class="kbd">rjr-267-add-notifications</span></div>
-<pre><span class="hdr">Model drift detected: 1 expected, 1 violation</span>
+      <div class="who">observe.py · on <span class="kbd">rjr-267-add-notifications</span></div>
+<pre><span class="hdr">Architecture observation</span>
+_Observation only — not a gate._
+
 <span class="add">+ node     notifications</span>
 <span class="add">+ edge     serving -> notifications</span>
-<span class="del">✕ edge     ledger -> serving   (cycle; intended model has no such edge)</span>
+<span class="del">⚠ edge     ledger -> serving   (inverted; baseline has no such edge)</span>
 
-Intended model: structurizr/reservation.dsl
-Actual model:   generated from code/reservation/
+Baseline: code/baseline.json
+Live:     pydeps over code/reservation/
 
-To accept: update the intended DSL in this PR.
-To reject:  remove the ledger -> serving import.</pre>
-      <p class="note">CI can <em>gate</em> on violations (red) while allowing expected additions (green) once the intended model is updated in the same PR — that's your intellectual control.</p>
+To accept: python3 code/observe.py --save-baseline
+To revert: remove the ledger -> serving import.</pre>
+      <p class="note">It <em>reports</em>, it doesn't <em>enforce</em>. You read the delta and decide — accept the change (advance the baseline) or course-correct the code. That's the right mode for a project being bootstrapped.</p>
     </div>
   </div>
 
-  <p class="note" style="margin-top:22px">Everything above is plain Python + open source: a small AST/import parser (or <span class="kbd">pydeps</span> for the raw graph), a committed intended DSL, <span class="kbd">difflib</span> for the delta, and the GitHub API to post the comment. No paid tooling, no lock-in — the model is a text file you own.</p>
+  <p class="note" style="margin-top:22px">Everything above is plain Python + open source: <span class="kbd">pydeps</span> for the graph, a committed <span class="kbd">baseline.json</span>, a small diff, and the GitHub API to post the comment. No paid tooling, no lock-in — the baseline is a text file you own, and the graph is always derived from the code, so it can't drift.</p>
 </div>
 </body>
 </html>

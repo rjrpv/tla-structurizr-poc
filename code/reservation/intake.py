@@ -1,11 +1,11 @@
-"""Request Intake container.
+"""Request Intake module.
 
 Owns the TLA+ state variable ``pending`` and the ``Request(c)`` guard:
 a customer may request only if not yet answered.
 
 Intake owns the pending queue and *drives* serving: :meth:`serve_next`
 pops the next pending customer and hands it to the serving logic. This
-is the ``intake -> serving`` dependency in the Structurizr model.
+is the ``intake -> serving`` edge in the pydeps dependency graph.
 """
 
 from .serving import ServingLogic
