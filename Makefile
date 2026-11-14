@@ -4,14 +4,14 @@ PYTHON  ?= python3
 TLC_JAR ?= tla2tools.jar
 TLC_URL ?= https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
 
-.PHONY: install-hooks check test observe tla examples examples-py
+.PHONY: install-hooks check test observe observe-examples tla examples examples-py
 
 ## Install the pre-commit hook (keeps code/baseline.json in sync on commit).
 install-hooks:
 	git config core.hooksPath .githooks
 	@echo "installed: git hooks now point at .githooks"
 
-## Gate: fail if the committed baseline is out of sync with the code.
+## Gate: fail if any committed baseline (reservation + examples) is out of sync.
 check:
 	$(PYTHON) code/observe.py --check
 
@@ -22,6 +22,10 @@ test:
 ## Print the structural observation (vs the committed baseline).
 observe:
 	$(PYTHON) code/observe.py
+
+## Render the canonical examples dependency graph (RJR-275).
+observe-examples:
+	$(PYTHON) code/observe.py --target examples --graph
 
 ## Model-check the TLA+ spec (downloads TLC if the jar is missing).
 tla: $(TLC_JAR)

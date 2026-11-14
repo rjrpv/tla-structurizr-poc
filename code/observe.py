@@ -21,17 +21,20 @@ Usage
     # diff the live graph vs the committed baseline (observation)
     python3 code/observe.py
 
+    # the canonical examples package (RJR-275)
+    python3 code/observe.py --target examples
+
     # diff the live graph vs a target branch (e.g. what this PR changes)
     python3 code/observe.py --against main
 
     # post that observation on PR #N (auto-diffs vs the PR's base branch)
     python3 code/observe.py --pr 4
 
-    # gate: fail if the committed baseline is out of sync with the code
+    # gate: fail if any committed baseline is out of sync with the code
     python3 code/observe.py --check
 
-    # regenerate the baseline from the current code (accept the state)
-    python3 code/observe.py --save-baseline
+    # regenerate a baseline from the current code (accept the state)
+    python3 code/observe.py --save-baseline --target examples
 """
 
 import argparse
@@ -44,16 +47,34 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
-PKG = HERE / "reservation"
-BASELINE = HERE / "baseline.json"
-PKG_PREFIX = "reservation."
+
+# The packages the observer watches. Each has its own baseline file, so the
+# two graphs are tracked (and gated) independently. The names are short on
+# purpose: ``--target reservation`` / ``--target examples``.
+TARGETS = {
+    "reservation": {
+        "pkg": HERE / "reservation",
+        "prefix": "reservation.",
+        "rmprefix": "code",
+        "baseline": HERE / "baseline.json",
+        "git_path": "code/reservation",
+    },
+    "examples": {
+        "pkg": REPO / "examples" / "code",
+        "prefix": "code.",
+        "rmprefix": "examples",
+        "baseline": REPO / "examples" / "baseline.json",
+        "git_path": "examples/code",
+    },
+}
+DEFAULT_TARGET = "reservation"
 
 
-def run_pydeps(pkg: Path) -> dict:
+def run_pydeps(pkg: Path, rmprefix: str) -> dict:
     """Run pydeps on a package dir and return its dependency graph as a dict."""
     cmd = [
         sys.executable, "-m", "pydeps", str(pkg),
-        "--no-output", "--show-deps", "--rmprefix", "code",
+        "--no-output", "--show-deps", "--rmprefix", rmprefix,
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -61,55 +82,63 @@ def run_pydeps(pkg: Path) -> dict:
     return json.loads(proc.stdout)
 
 
-def live_graph() -> dict:
-    """The normalized dependency graph of the current working tree."""
-    return normalize(run_pydeps(PKG))
+def live_graph(target: str = DEFAULT_TARGET) -> dict:
+    """The normalized dependency graph of the current working tree.
+
+    Defaults to the reservation package so ``from observe import live_graph``
+    (used by the architecture tests) keeps working unchanged.
+    """
+    t = TARGETS[target]
+    return normalize(run_pydeps(t["pkg"], t["rmprefix"]), t["prefix"])
 
 
-def graph_from_ref(ref: str) -> dict:
+def graph_from_ref(ref: str, target: str = DEFAULT_TARGET) -> dict:
     """The normalized dependency graph of the package as it exists at ``ref``.
 
-    Extracts ``code/reservation`` from the ref into a temp dir (preserving the
-    ``code/`` prefix so module names match) and runs pydeps on it. This is how
-    we diff a branch against its target branch without checking it out.
+    Extracts the package from the ref into a temp dir (preserving its path so
+    module names match) and runs pydeps on it. This is how we diff a branch
+    against its target branch without checking it out.
     """
+    t = TARGETS[target]
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         tar = tmp / "pkg.tar"
         with open(tar, "wb") as fh:
             subprocess.run(
-                ["git", "archive", ref, "code/reservation"],
+                ["git", "archive", ref, t["git_path"]],
                 cwd=REPO, stdout=fh, check=True,
             )
         subprocess.run(["tar", "-x", "-f", str(tar), "-C", str(tmp)], check=True)
-        return normalize(run_pydeps(tmp / "code" / "reservation"))
+        return normalize(run_pydeps(tmp / t["git_path"], t["rmprefix"]), t["prefix"])
 
 
-def normalize(graph: dict) -> dict:
+def normalize(graph: dict, prefix: str) -> dict:
     """Reduce pydeps' graph to {short_module: [short_imports]} for the package.
 
     Drops the ``__main__`` pseudo-module and anything outside the package.
     """
     out = {}
     for name, info in graph.items():
-        if name == "__main__" or not name.startswith(PKG_PREFIX):
+        if name == "__main__" or not name.startswith(prefix):
             continue
-        short = name[len(PKG_PREFIX):]
+        short = name[len(prefix):]
         deps = sorted(
-            dep[len(PKG_PREFIX):]
+            dep[len(prefix):]
             for dep in info.get("imports", [])
-            if dep.startswith(PKG_PREFIX)
+            if dep.startswith(prefix)
         )
         out[short] = deps
     return out
 
 
-def load_baseline() -> dict:
-    if not BASELINE.exists():
+def load_baseline(target: str = DEFAULT_TARGET) -> dict:
+    path = TARGETS[target]["baseline"]
+    if not path.exists():
         raise SystemExit(
-            f"no baseline at {BASELINE}. Run: python3 code/observe.py --save-baseline"
+            f"no baseline at {path}. "
+            f"Run: python3 code/observe.py --save-baseline --target {target}"
         )
-    return json.loads(BASELINE.read_text())
+    return json.loads(path.read_text())
 
 
 def diff_graph(base: dict, live: dict) -> dict:
@@ -128,12 +157,17 @@ def diff_graph(base: dict, live: dict) -> dict:
 def render_mermaid(diff: dict, live: dict) -> str:
     """Render the live dependency graph as a mermaid diagram.
 
-    Added modules/edges (vs the reference) are highlighted so the structural
-    delta is visible at a glance. GitHub renders ```mermaid blocks natively.
+    Every module is declared as a node (so isolated modules with no edges
+    still show up), then the dependency edges are drawn. Added
+    modules/edges (vs the reference) are highlighted so the structural delta
+    is visible at a glance. GitHub renders ```mermaid blocks natively.
     """
     added_mods = set(diff["modules_added"])
     added_edges = {tuple(e.split(" -> ")) for e in diff["edges_added"]}
     lines = ["```mermaid", "graph LR"]
+    # Declare every node up front so modules with no edges are still drawn.
+    for m in sorted(live):
+        lines.append(f"    {m}[{m}]")
     link_index = {}  # (from, to) -> declaration index (mermaid linkStyle needs this)
     for m, deps in sorted(live.items()):
         for d in deps:
@@ -225,21 +259,23 @@ def post_pr_comment(pr_number: int, body: str, dry_run: bool) -> None:
         print(f"posted comment -> {d['html_url']}")
 
 
-def resolve_reference(args) -> tuple:
+def resolve_reference(args, target: str) -> tuple:
     """Return (reference_graph, label) for the observation diff.
 
     Priority: --against <ref> > --pr <n> (PR's base branch) > committed baseline.
     """
     if args.against:
-        return graph_from_ref(args.against), args.against
+        return graph_from_ref(args.against, target), args.against
     if args.pr:
         base = pr_base_ref(args.pr)
-        return graph_from_ref(base), base
-    return load_baseline(), "baseline"
+        return graph_from_ref(base, target), base
+    return load_baseline(target), "baseline"
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--target", choices=sorted(TARGETS), default=DEFAULT_TARGET,
+                    help="which package to watch (default: reservation)")
     ap.add_argument("--against", metavar="REF",
                     help="diff the live graph against this git ref (e.g. main)")
     ap.add_argument("--pr", type=int,
@@ -250,28 +286,42 @@ def main() -> int:
     ap.add_argument("--save-baseline", action="store_true",
                     help="write the live graph as the new baseline (accept the state)")
     ap.add_argument("--json", action="store_true", help="emit the diff as JSON")
+    ap.add_argument("--graph", action="store_true",
+                    help="render the full live dependency graph as mermaid "
+                         "(always, even when there is no structural change)")
     args = ap.parse_args()
 
-    live = live_graph()
+    live = live_graph(args.target)
+
+    if args.graph:
+        print(render_mermaid(diff_graph({}, live), live))
+        return 0
 
     if args.save_baseline:
-        BASELINE.write_text(json.dumps(live, indent=2) + "\n")
-        print(f"saved baseline: {len(live)} modules, {sum(len(v) for v in live.values())} edges")
+        path = TARGETS[args.target]["baseline"]
+        path.write_text(json.dumps(live, indent=2) + "\n")
+        print(f"saved baseline ({args.target}): {len(live)} modules, "
+              f"{sum(len(v) for v in live.values())} edges")
         return 0
 
     if args.check:
-        base = load_baseline()
-        if base == live:
-            print(f"baseline in sync with code — {len(live)} modules, "
-                  f"{sum(len(v) for v in live.values())} edges.")
-            return 0
-        diff = diff_graph(base, live)
-        print("baseline is OUT OF SYNC with the code. Regenerate it:\n")
-        print(render_markdown(diff, live, "baseline"))
-        print("\n  python3 code/observe.py --save-baseline")
-        return 1
+        # The gate covers every watched target, so a stale baseline in either
+        # package blocks the merge.
+        failed = False
+        for name in TARGETS:
+            g = live_graph(name)
+            base = load_baseline(name)
+            if base == g:
+                print(f"[{name}] baseline in sync with code — {len(g)} modules, "
+                      f"{sum(len(v) for v in g.values())} edges.")
+            else:
+                failed = True
+                print(f"[{name}] baseline is OUT OF SYNC with the code.\n")
+                print(render_markdown(diff_graph(base, g), g, "baseline"))
+                print(f"\n  python3 code/observe.py --save-baseline --target {name}")
+        return 1 if failed else 0
 
-    ref_graph, label = resolve_reference(args)
+    ref_graph, label = resolve_reference(args, args.target)
     diff = diff_graph(ref_graph, live)
     md = render_markdown(diff, live, label)
 

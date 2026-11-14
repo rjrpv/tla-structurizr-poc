@@ -1,0 +1,10 @@
+{
+  "consensus": [],
+  "counter": [],
+  "fifo_queue": [],
+  "inventory": [],
+  "key_value_store": [],
+  "leader_election": [],
+  "token_ring": [],
+  "traffic_light": []
+}

@@ -41,6 +41,7 @@ every request must eventually be answered.**
 │   ├── *.cfg                     #   inventory, consensus, ...)
 │   ├── code/                     #   Python mirror of each model
 │   ├── tests/                    #   state-space mirror test (the anchor)
+│   ├── baseline.json             #   the examples dependency graph (accepted)
 │   └── tlc_output.txt            #   captured TLC runs (all pass)
 ├── code/
 │   ├── reservation/              # Python reference implementation (6 modules)
@@ -102,11 +103,17 @@ python3 -m pytest -q          # 13 tests: invariants, state-space mirror, archit
 
 ```sh
 python3 code/observe.py                    # diff the live graph vs the baseline
+python3 code/observe.py --target examples  # the canonical examples package
+python3 code/observe.py --target examples --graph   # render a graph as mermaid
 python3 code/observe.py --against main     # diff vs a target branch (a PR's delta)
 python3 code/observe.py --pr 4             # post that delta as a PR comment
-python3 code/observe.py --check            # gate: fail if baseline is out of sync
+python3 code/observe.py --check            # gate: fail if any baseline is out of sync
 python3 code/observe.py --save-baseline    # regenerate the baseline (accept the state)
 ```
+
+The observer watches two packages — `code/reservation` (default) and
+`examples/code` (`--target examples`) — each with its own committed baseline
+and gate.
 
 Install the pre-commit hook once per clone so the baseline stays in sync:
 

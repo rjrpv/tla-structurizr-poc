@@ -136,6 +136,35 @@ python3 -m pytest -q examples/tests
 
 Expected: **16 passed** (8 invariant + 8 state-space).
 
+## Dependency graph
+
+`code/observe.py` watches `examples/code` as a second target (alongside
+`code/reservation`), so the mirror package has its own architecture baseline
+(`examples/baseline.json`) and gate. Render the graph:
+
+```sh
+make observe-examples                        # or:
+python3 code/observe.py --target examples --graph
+```
+
+```mermaid
+graph LR
+    consensus[consensus]
+    counter[counter]
+    fifo_queue[fifo_queue]
+    inventory[inventory]
+    key_value_store[key_value_store]
+    leader_election[leader_election]
+    token_ring[token_ring]
+    traffic_light[traffic_light]
+```
+
+The eight mirrors are intentionally **independent** — each is a standalone
+one-property model — so the graph is eight isolated modules with no edges. That
+is the honest structure: the examples deliberately don't share code. (The main
+model, by contrast, has a real dependency graph — see
+`python3 code/observe.py --graph`.)
+
 ## How to extend
 
 To add a scenario: create `examples/<Name>.tla` (module name = file name, no

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Pre-commit: keep the architecture baseline in sync with the code.
+# Pre-commit: keep the architecture baselines in sync with the code.
 #
-# If this commit changes code/reservation/ (the package the observer watches),
-# the committed baseline (code/baseline.json) is regenerated from the working
-# tree and re-staged, so the commit always records the accepted structure.
+# The observer watches two packages (see code/observe.py TARGETS):
+#   reservation -> code/reservation   (baseline: code/baseline.json)
+#   examples    -> examples/code      (baseline: examples/baseline.json)
+# If this commit changes a watched package, its baseline is regenerated from
+# the working tree and re-staged, so the commit records the accepted structure.
 #
 # This is the local convenience half of the acceptance loop. The CI gate
 # (code/observe.py --check) enforces the same invariant for everyone, so a
@@ -13,19 +15,24 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-PKG="code/reservation"
-BASELINE="code/baseline.json"
 
-# Are any files under the watched package in the index?
-changed="$(git diff --cached --name-only -- "$PKG" || true)"
-if [ -z "$changed" ]; then
-  exit 0
-fi
+# target:git-path:baseline-file
+WATCHED=(
+  "reservation:code/reservation:code/baseline.json"
+  "examples:examples/code:examples/baseline.json"
+)
 
-# Regenerate the baseline from the current working tree.
-python3 "$ROOT/code/observe.py" --save-baseline >/dev/null
+for entry in "${WATCHED[@]}"; do
+  target="${entry%%:*}"
+  rest="${entry#*:}"
+  pkg="${rest%%:*}"
+  baseline="${rest#*:}"
 
-# Re-stage it so the commit carries the updated baseline.
-git add "$BASELINE"
+  # Are any files under this watched package in the index?
+  changed="$(git diff --cached --name-only -- "$pkg" || true)"
+  [ -z "$changed" ] && continue
 
-echo "pre-commit: baseline regenerated for $PKG change" >&2
+  python3 "$ROOT/code/observe.py" --save-baseline --target "$target" >/dev/null
+  git add "$baseline"
+  echo "pre-commit: baseline regenerated for $pkg change" >&2
+done
