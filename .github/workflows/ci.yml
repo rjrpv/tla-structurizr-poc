@@ -20,6 +20,8 @@ jobs:
         run: python3 code/observe.py --check
       - name: Test suite (invariants + state-space mirror + architecture)
         run: python3 -m pytest -q code/tests
+      - name: Canonical examples state-space mirror (RJR-275)
+        run: python3 -m pytest -q examples/tests
 
   tla:
     name: TLA+ model check (invariants hold)

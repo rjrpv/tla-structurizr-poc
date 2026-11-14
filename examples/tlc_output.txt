@@ -1,0 +1,272 @@
+================================================================
+Example: TrafficLight
+Command: java -jar tla2tools.jar -workers auto examples/TrafficLight
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 68 and seed 4470648087573766556 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40045] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/TrafficLight.tla
+Parsing file /tmp/tlc-15283484564597119680/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-15283484564597119680/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-15283484564597119680/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /tmp/tlc-15283484564597119680/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-15283484564597119680/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-15283484564597119680/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-15283484564597119680/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module TrafficLight
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module TrafficLight
+Starting... (2026-11-14 02:05:42)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:42.
+Model checking completed. No error has been found.
+3 states generated, 2 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 2.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).
+Finished in 00s at (2026-11-14 02:05:43)
+
+================================================================
+Example: Counter
+Command: java -jar tla2tools.jar -workers auto examples/Counter
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 96 and seed 365060936396414115 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40118] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/Counter.tla
+Parsing file /tmp/tlc-11693808568943476337/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-11693808568943476337/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-11693808568943476337/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-11693808568943476337/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /tmp/tlc-11693808568943476337/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-11693808568943476337/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-11693808568943476337/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module Counter
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module Counter
+Starting... (2026-11-14 02:05:43)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:43.
+Model checking completed. No error has been found.
+7 states generated, 6 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 6.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).
+Finished in 00s at (2026-11-14 02:05:43)
+
+================================================================
+Example: Queue
+Command: java -jar tla2tools.jar -workers auto examples/Queue
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 29 and seed 133015103638503039 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40185] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/Queue.tla
+Parsing file /tmp/tlc-252303278877424094/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-252303278877424094/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-252303278877424094/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Parsing file /tmp/tlc-252303278877424094/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-252303278877424094/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-252303278877424094/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-252303278877424094/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module Integers
+Semantic processing of module TLC
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module Queue
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module Queue
+Starting... (2026-11-14 02:05:44)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:44.
+Model checking completed. No error has been found.
+11 states generated, 4 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 4.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).
+Finished in 00s at (2026-11-14 02:05:44)
+
+================================================================
+Example: LeaderElection
+Command: java -jar tla2tools.jar -workers auto examples/LeaderElection
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 109 and seed 4457533071732962715 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40251] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/LeaderElection.tla
+Parsing file /tmp/tlc-14066849713198548120/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-14066849713198548120/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-14066849713198548120/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-14066849713198548120/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-14066849713198548120/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-14066849713198548120/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /tmp/tlc-14066849713198548120/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module LeaderElection
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module LeaderElection
+Starting... (2026-11-14 02:05:45)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:45.
+Model checking completed. No error has been found.
+20 states generated, 4 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 2.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 3 and the 95th percentile is 3).
+Finished in 00s at (2026-11-14 02:05:45)
+
+================================================================
+Example: TokenRing
+Command: java -jar tla2tools.jar -workers auto examples/TokenRing
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 84 and seed 1112741664917655616 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40318] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/TokenRing.tla
+Parsing file /tmp/tlc-16776165103776699560/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-16776165103776699560/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Parsing file /tmp/tlc-16776165103776699560/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-16776165103776699560/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-16776165103776699560/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-16776165103776699560/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-16776165103776699560/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module Integers
+Semantic processing of module TLC
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module TokenRing
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module TokenRing
+Starting... (2026-11-14 02:05:46)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:46.
+Model checking completed. No error has been found.
+16 states generated, 6 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 4.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 2 and the 95th percentile is 2).
+Finished in 00s at (2026-11-14 02:05:46)
+
+================================================================
+Example: Inventory
+Command: java -jar tla2tools.jar -workers auto examples/Inventory
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 93 and seed 8871896237787487367 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40385] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/Inventory.tla
+Parsing file /tmp/tlc-7766666783760159836/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-7766666783760159836/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-7766666783760159836/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-7766666783760159836/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /tmp/tlc-7766666783760159836/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-7766666783760159836/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-7766666783760159836/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module Inventory
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module Inventory
+Starting... (2026-11-14 02:05:46)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:47.
+Model checking completed. No error has been found.
+15 states generated, 5 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 5.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 1 and the 95th percentile is 1).
+Finished in 00s at (2026-11-14 02:05:47)
+
+================================================================
+Example: KeyValueStore
+Command: java -jar tla2tools.jar -workers auto examples/KeyValueStore
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 2 and seed -4517650856576134619 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40451] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/KeyValueStore.tla
+Parsing file /tmp/tlc-5592980693316648837/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-5592980693316648837/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-5592980693316648837/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Parsing file /tmp/tlc-5592980693316648837/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-5592980693316648837/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-5592980693316648837/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-5592980693316648837/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module TLC
+Semantic processing of module Integers
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module KeyValueStore
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module KeyValueStore
+Starting... (2026-11-14 02:05:47)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:47.
+Model checking completed. No error has been found.
+21 states generated, 4 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 3.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 2 and the 95th percentile is 2).
+Finished in 00s at (2026-11-14 02:05:47)
+
+================================================================
+Example: Consensus
+Command: java -jar tla2tools.jar -workers auto examples/Consensus
+================================================================
+TLC2 Version 2026.11.06.222357 (rev: d8fb231)
+Running breadth-first search Model-Checking with fp 20 and seed 5449910164149185411 with 32 workers on 32 cores with 30688MB heap and 64MB offheap memory [pid: 40518] (Linux 4.19.0-gvisor amd64, Eclipse Adoptium 17.0.21 64bit, MSBDiskFPSet, DiskStateQueue).
+Parsing file /home/openhands/.openhands/agent-canvas/workspaces/16188b4ee1cf4211a072d7b9a5377647/tla-structurizr-poc/examples/Consensus.tla
+Parsing file /tmp/tlc-9879110406961254719/FiniteSets.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/FiniteSets.tla)
+Parsing file /tmp/tlc-9879110406961254719/Integers.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Integers.tla)
+Parsing file /tmp/tlc-9879110406961254719/_TLCTrace.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/_TLCTrace.tla)
+Parsing file /tmp/tlc-9879110406961254719/Naturals.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Naturals.tla)
+Parsing file /tmp/tlc-9879110406961254719/Sequences.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/Sequences.tla)
+Parsing file /tmp/tlc-9879110406961254719/TLC.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLC.tla)
+Parsing file /tmp/tlc-9879110406961254719/TLCExt.tla (jar:file:/home/openhands/tools/tla2tools.jar!/tla2sany/StandardModules/TLCExt.tla)
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module Integers
+Semantic processing of module TLC
+Semantic processing of module TLCExt
+Semantic processing of module _TLCTrace
+Semantic processing of module Consensus
+Linting of module TLCExt
+Linting of module _TLCTrace
+Linting of module Consensus
+Starting... (2026-11-14 02:05:48)
+Computing initial states...
+Finished computing initial states: 1 distinct state generated at 2026-11-14 02:05:48.
+Model checking completed. No error has been found.
+234 states generated, 83 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 7.
+The average outdegree of the complete state graph is 1 (minimum is 0, the maximum 6 and the 95th percentile is 3).
+Finished in 00s at (2026-11-14 02:05:48)
+
