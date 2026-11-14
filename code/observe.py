@@ -1,31 +1,37 @@
-"""Observe architecture drift: diff the code's dependency graph against a baseline.
+"""Observe and accept architecture changes.
 
-Observation, not control. This is for a project that is being bootstrapped:
-we want to *see* when the code's structure changes relative to a known-good
-baseline and advertise that in the PR — not block the PR. The exit code is
-always 0 (unless pydeps itself fails); nothing here is a gate.
+Two distinct jobs, kept separate on purpose:
 
-How it works
-------------
-1. Run ``pydeps`` on the package to get the current dependency graph (JSON).
-2. Load the committed baseline (``baseline.json``) — the graph as of the last
-   time we looked.
-3. Diff the two: which modules and edges were added / removed.
-4. Emit a short observation (markdown for humans, JSON for machines).
+* **Observation** (default, and ``--pr``): diff the live dependency graph
+  against a *reference* — by default the committed baseline, or a git ref
+  (``--against <ref>``), or the PR's base branch (``--pr``). This is the
+  "what did this branch change structurally?" view. It never blocks.
+
+* **Acceptance gate** (``--check``): the committed baseline must match a
+  fresh generation of the graph. If the code changed but the baseline wasn't
+  regenerated, this fails (non-zero exit) and blocks the merge. This is what
+  makes *merging* a PR the act that accepts a structural change: the baseline
+  is the record of the accepted state, and it must be in sync with the code.
+
+The pre-commit hook (``.githooks/pre-commit``) keeps the baseline in sync
+locally; the CI gate (``.github/workflows/ci.yml``) enforces it for everyone.
 
 Usage
 -----
-    # print the observation for the current code
+    # diff the live graph vs the committed baseline (observation)
     python3 code/observe.py
 
-    # post it as a comment on PR #N (uses $GITHUB_TOKEN)
-    python3 code/observe.py --pr 2
+    # diff the live graph vs a target branch (e.g. what this PR changes)
+    python3 code/observe.py --against main
 
-    # after reviewing, accept the current state as the new baseline
+    # post that observation on PR #N (auto-diffs vs the PR's base branch)
+    python3 code/observe.py --pr 4
+
+    # gate: fail if the committed baseline is out of sync with the code
+    python3 code/observe.py --check
+
+    # regenerate the baseline from the current code (accept the state)
     python3 code/observe.py --save-baseline
-
-The baseline is a plain JSON file you own; the diff between it and the live
-graph is the unit of observation.
 """
 
 import argparse
@@ -33,27 +39,50 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parent
 PKG = HERE / "reservation"
 BASELINE = HERE / "baseline.json"
 PKG_PREFIX = "reservation."
 
 
-def run_pydeps() -> dict:
-    """Run pydeps on the package and return its dependency graph as a dict.
-
-    ``--show-deps`` prints the dependency analysis as JSON to stdout.
-    """
+def run_pydeps(pkg: Path) -> dict:
+    """Run pydeps on a package dir and return its dependency graph as a dict."""
     cmd = [
-        sys.executable, "-m", "pydeps", str(PKG),
+        sys.executable, "-m", "pydeps", str(pkg),
         "--no-output", "--show-deps", "--rmprefix", "code",
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
         raise SystemExit(f"pydeps failed:\n{proc.stderr}")
     return json.loads(proc.stdout)
+
+
+def live_graph() -> dict:
+    """The normalized dependency graph of the current working tree."""
+    return normalize(run_pydeps(PKG))
+
+
+def graph_from_ref(ref: str) -> dict:
+    """The normalized dependency graph of the package as it exists at ``ref``.
+
+    Extracts ``code/reservation`` from the ref into a temp dir (preserving the
+    ``code/`` prefix so module names match) and runs pydeps on it. This is how
+    we diff a branch against its target branch without checking it out.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        tar = tmp / "pkg.tar"
+        with open(tar, "wb") as fh:
+            subprocess.run(
+                ["git", "archive", ref, "code/reservation"],
+                cwd=REPO, stdout=fh, check=True,
+            )
+        subprocess.run(["tar", "-x", "-f", str(tar), "-C", str(tmp)], check=True)
+        return normalize(run_pydeps(tmp / "code" / "reservation"))
 
 
 def normalize(graph: dict) -> dict:
@@ -99,7 +128,7 @@ def diff_graph(base: dict, live: dict) -> dict:
 def render_mermaid(diff: dict, live: dict) -> str:
     """Render the live dependency graph as a mermaid diagram.
 
-    Added modules/edges (vs the baseline) are highlighted so the structural
+    Added modules/edges (vs the reference) are highlighted so the structural
     delta is visible at a glance. GitHub renders ```mermaid blocks natively.
     """
     added_mods = set(diff["modules_added"])
@@ -120,15 +149,16 @@ def render_mermaid(diff: dict, live: dict) -> str:
     return "\n".join(lines)
 
 
-def render_markdown(diff: dict, live: dict) -> str:
+def render_markdown(diff: dict, live: dict, against: str) -> str:
     changed = any(diff[k] for k in diff)
     if not changed:
         return (
-            "### Architecture observation\n\n"
-            f"No structural change vs baseline — {len(live)} modules, "
+            f"### Architecture observation\n\n"
+            f"No structural change vs {against} — {len(live)} modules, "
             f"{sum(len(v) for v in live.values())} edges."
         )
-    lines = ["### Architecture observation", "", "_Observation only — not a gate._", ""]
+    lines = [f"### Architecture observation (vs {against})", "",
+             "_Observation only — not a gate. Merging accepts the change._", ""]
     lines.append(render_mermaid(diff, live))
     lines.append("")
     if diff["modules_added"]:
@@ -148,9 +178,26 @@ def render_markdown(diff: dict, live: dict) -> str:
         lines += [f"- `{e}`" for e in diff["edges_removed"]]
         lines.append("")
     lines.append(
-        "_To accept this as the new baseline: `python3 code/observe.py --save-baseline`_"
+        "_The baseline is regenerated on commit (pre-commit hook) and must stay "
+        "in sync with the code (CI `--check` gate) — merging is the acceptance._"
     )
     return "\n".join(lines)
+
+
+def pr_base_ref(pr_number: int) -> str:
+    """Look up a PR's base branch via the GitHub API (for --pr auto-diff)."""
+    import urllib.request
+
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise SystemExit("GITHUB_TOKEN not set (or use --against <ref>)")
+    repo = os.environ.get("OBSERVE_REPO", "rjrpv/tla-structurizr-poc")
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/pulls/{pr_number}",
+        headers={"Authorization": f"token {token}", "Accept": "application/vnd.github+json"},
+    )
+    with urllib.request.urlopen(req) as r:
+        return json.load(r)["base"]["ref"]
 
 
 def post_pr_comment(pr_number: int, body: str, dry_run: bool) -> None:
@@ -178,27 +225,58 @@ def post_pr_comment(pr_number: int, body: str, dry_run: bool) -> None:
         print(f"posted comment -> {d['html_url']}")
 
 
+def resolve_reference(args) -> tuple:
+    """Return (reference_graph, label) for the observation diff.
+
+    Priority: --against <ref> > --pr <n> (PR's base branch) > committed baseline.
+    """
+    if args.against:
+        return graph_from_ref(args.against), args.against
+    if args.pr:
+        base = pr_base_ref(args.pr)
+        return graph_from_ref(base), base
+    return load_baseline(), "baseline"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--pr", type=int, help="post the observation as a comment on this PR")
+    ap.add_argument("--against", metavar="REF",
+                    help="diff the live graph against this git ref (e.g. main)")
+    ap.add_argument("--pr", type=int,
+                    help="post the observation on PR #N (auto-diffs vs the PR's base branch)")
     ap.add_argument("--dry-run", action="store_true", help="print instead of posting")
-    ap.add_argument("--save-baseline", action="store_true", help="write the live graph as the new baseline")
+    ap.add_argument("--check", action="store_true",
+                    help="gate: fail if the committed baseline is out of sync with the code")
+    ap.add_argument("--save-baseline", action="store_true",
+                    help="write the live graph as the new baseline (accept the state)")
     ap.add_argument("--json", action="store_true", help="emit the diff as JSON")
     args = ap.parse_args()
 
-    live = normalize(run_pydeps())
+    live = live_graph()
 
     if args.save_baseline:
         BASELINE.write_text(json.dumps(live, indent=2) + "\n")
         print(f"saved baseline: {len(live)} modules, {sum(len(v) for v in live.values())} edges")
         return 0
 
-    base = load_baseline()
-    diff = diff_graph(base, live)
-    md = render_markdown(diff, live)
+    if args.check:
+        base = load_baseline()
+        if base == live:
+            print(f"baseline in sync with code — {len(live)} modules, "
+                  f"{sum(len(v) for v in live.values())} edges.")
+            return 0
+        diff = diff_graph(base, live)
+        print("baseline is OUT OF SYNC with the code. Regenerate it:\n")
+        print(render_markdown(diff, live, "baseline"))
+        print("\n  python3 code/observe.py --save-baseline")
+        return 1
+
+    ref_graph, label = resolve_reference(args)
+    diff = diff_graph(ref_graph, live)
+    md = render_markdown(diff, live, label)
 
     if args.json:
-        print(json.dumps({"diff": diff, "live": live}, indent=2))
+        print(json.dumps({"against": label, "diff": diff, "live": live}, indent=2))
     else:
         print(md)
 
