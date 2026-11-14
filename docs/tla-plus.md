@@ -79,7 +79,7 @@ reachable states in well under a second.
 ## Running it
 
 ```sh
-java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem
+java -jar tla2tools.jar -workers auto tla/ReservationSystem
 ```
 
 Output (from `tla/tlc_output.txt`):

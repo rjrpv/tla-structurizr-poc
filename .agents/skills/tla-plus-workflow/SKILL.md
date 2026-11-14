@@ -20,7 +20,7 @@ Follow these rules for any change.
   Python code and back-port it.
 - Run TLC after editing the spec:
   ```
-  java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem
+  java -jar tla2tools.jar -workers auto tla/ReservationSystem
   ```
   (the jar is in `~/tools/` locally; CI downloads it). All invariants must
   hold and `tla/tlc_output.txt` must be updated to the fresh result.

@@ -29,4 +29,4 @@ jobs:
       - name: Download TLC
         run: curl -fsSL -o tla2tools.jar https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
       - name: Model-check the spec
-        run: java -jar tla2tools.jar tlc2.TLC -workers auto tla/ReservationSystem
+        run: java -jar tla2tools.jar -workers auto tla/ReservationSystem

@@ -62,7 +62,7 @@ every request must eventually be answered.**
 ### TLA+ (behavior)
 
 ```sh
-java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem
+java -jar tla2tools.jar -workers auto tla/ReservationSystem
 ```
 
 Expected: `Model checking completed. No error has been found.`

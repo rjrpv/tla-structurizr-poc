@@ -10,7 +10,7 @@ merging (not gated on opinion).
 short version:
 
 1. **Logic changes go in TLA+ first.** Edit the spec, run TLC
-   (`java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem`), update
+   (`java -jar tla2tools.jar -workers auto tla/ReservationSystem`), update
    `tla/tlc_output.txt`. A TLC counterexample is a *finding* about the model —
    fix the model, then re-run.
 2. **Tests mirror the spec.** Update `code/tests/` in the same change. The
@@ -28,7 +28,7 @@ short version:
 
 | Task | Command |
 |---|---|
-| Model-check the spec | `java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem` |
+| Model-check the spec | `java -jar tla2tools.jar -workers auto tla/ReservationSystem` |
 | Run tests | `cd code && python3 -m pytest -q` |
 | Baseline gate (must pass to merge) | `python3 code/observe.py --check` |
 | Structure delta vs a branch | `python3 code/observe.py --against main` |
