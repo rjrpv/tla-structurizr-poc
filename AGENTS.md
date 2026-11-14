@@ -26,6 +26,9 @@ short version:
 
 ## Commands
 
+The `Makefile` wraps the common ones (`make install-hooks`, `make check`,
+`make test`, `make observe`, `make tla`). The raw commands:
+
 | Task | Command |
 |---|---|
 | Model-check the spec | `java -jar tla2tools.jar -workers auto tla/ReservationSystem` |
@@ -34,7 +37,7 @@ short version:
 | Structure delta vs a branch | `python3 code/observe.py --against main` |
 | Post structure delta on a PR | `python3 code/observe.py --pr <N>` |
 | Accept the current structure | `python3 code/observe.py --save-baseline` |
-| Install the pre-commit hook | `git config core.hooksPath .githooks` |
+| Install the pre-commit hook | `make install-hooks` |
 
 ## Invariants (spec)
 

@@ -49,6 +49,7 @@ every request must eventually be answered.**
 │   └── requirements.txt
 ├── .githooks/pre-commit          # keeps baseline.json in sync on commit
 ├── .github/workflows/ci.yml      # tests + baseline gate + TLC on every PR
+├── Makefile                      # make install-hooks / check / test / observe / tla
 ├── AGENTS.md                     # workflow rules for agents (and humans)
 ├── .agents/skills/               # the tla-plus-workflow skill
 └── docs/
@@ -87,7 +88,13 @@ python3 code/observe.py --save-baseline    # regenerate the baseline (accept the
 ```
 
 Install the pre-commit hook once per clone so the baseline stays in sync:
-`git config core.hooksPath .githooks`.
+
+```sh
+make install-hooks          # = git config core.hooksPath .githooks
+```
+
+(The `Makefile` also wraps the other steps: `make check`, `make test`,
+`make observe`, `make tla`.)
 
 ## The result
 

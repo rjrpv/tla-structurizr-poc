@@ -64,7 +64,9 @@ The code's dependency graph is observed with `code/observe.py`. For a PR:
   gate (`code/observe.py --check`) blocks a merge if the baseline is out of
   sync with the code. **Merging is the acceptance** of a structural change —
   so the baseline must be in sync in the PR, or CI fails.
-- Install the hook once per clone: `git config core.hooksPath .githooks`.
+- Install the hook once per clone: `make install-hooks`
+  (= `git config core.hooksPath .githooks`). The `Makefile` also wraps the
+  other steps: `make check`, `make test`, `make observe`, `make tla`.
 
 ## Quick checklist before opening a PR
 
