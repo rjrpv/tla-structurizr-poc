@@ -4,7 +4,7 @@ PYTHON  ?= python3
 TLC_JAR ?= tla2tools.jar
 TLC_URL ?= https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
 
-.PHONY: install-hooks check test observe tla
+.PHONY: install-hooks check test observe tla examples
 
 ## Install the pre-commit hook (keeps code/baseline.json in sync on commit).
 install-hooks:
@@ -26,6 +26,14 @@ observe:
 ## Model-check the TLA+ spec (downloads TLC if the jar is missing).
 tla: $(TLC_JAR)
 	java -jar $(TLC_JAR) -workers auto tla/ReservationSystem
+
+## Model-check all the canonical examples in examples/ (RJR-275).
+examples: $(TLC_JAR)
+	@for m in TrafficLight Counter Queue LeaderElection TokenRing Inventory KeyValueStore Consensus; do \
+		echo "=== $$m ==="; \
+		java -jar $(TLC_JAR) -workers auto -nowarning examples/$$m \
+			| grep -E "Model checking completed|Error|Semantic errors|distinct states found"; \
+	done
 
 $(TLC_JAR):
 	curl -fsSL -o $(TLC_JAR) $(TLC_URL)

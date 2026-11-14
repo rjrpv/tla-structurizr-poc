@@ -35,6 +35,11 @@ every request must eventually be answered.**
 │   ├── ReservationSystem.tla     # the behavioral model (TLA+)
 │   ├── ReservationSystem.cfg     # TLC model: 2 tickets, 3 customers
 │   └── tlc_output.txt            # captured TLC run (all properties pass)
+├── examples/                     # canonical TLA+ scenarios (RJR-275)
+│   ├── README.md                 #   what each is, and how to run them
+│   ├── TrafficLight.tla ...      #   8 one-property models (leader election,
+│   ├── *.cfg                     #   inventory, consensus, ...)
+│   └── tlc_output.txt            #   captured TLC runs (all pass)
 ├── code/
 │   ├── reservation/              # Python reference implementation (6 modules)
 │   │   ├── system.py             #   wires the modules
@@ -68,6 +73,18 @@ java -jar tla2tools.jar -workers auto tla/ReservationSystem
 
 Expected: `Model checking completed. No error has been found.`
 (`NoOversell` and `BoundedStock` invariants hold; `Progress` liveness holds.)
+
+### Canonical examples (RJR-275)
+
+Eight very simple, one-property TLA+ models of canonical scenarios — leader
+election, inventory checking, consensus, and more:
+
+```sh
+make examples                          # model-check all eight
+java -jar tla2tools.jar -workers auto examples/LeaderElection   # or one
+```
+
+See [examples/README.md](examples/README.md) for what each is about.
 
 ### Code (the mirror)
 

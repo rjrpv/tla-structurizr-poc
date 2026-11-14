@@ -4,3 +4,4 @@ __pycache__/
 .hypothesis/
 states/
 tla2tools.jar
+*_TTrace_*.tla
