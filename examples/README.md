@@ -99,10 +99,49 @@ readable and instant.
   largest state space here (83 states) because there are many vote/decision
   orderings — and they all agree.
 
+## The code mirror (the anchor)
+
+Each example also has a small Python implementation in [`code/`](code/) — the
+same "spec mirrors code" pattern the main model uses (see
+[`docs/code-mirror.md`](../docs/code-mirror.md)). This is what **anchors the
+tests to the TLA+ models and their state spaces**.
+
+Each mirror module exposes three things, one per part of the spec:
+
+| Mirror function | Mirrors the TLA+ | What it does |
+|-----------------|------------------|--------------|
+| `initial()` | `Init` | the initial state |
+| `successors(state)` | `Next` | the allowed next states (nondeterminism enumerated) |
+| `invariant(state)` | the `INVARIANT` line in the `.cfg` | the property that must hold |
+
+The test [`tests/test_examples_state_space_mirror.py`](tests/test_examples_state_space_mirror.py)
+does a breadth-first search over the **concrete code** (driving the real
+`successors()`) and asserts, for every example:
+
+1. **the TLA+ invariant holds in every reachable state** — if the code ever
+   reaches a state the spec says is illegal, the test fails; and
+2. **the number of distinct reachable states equals what TLC reported** (the
+   "Distinct states" column above, read from `tlc_output.txt`).
+
+That second check is the anchor: if the concrete code's behavior ever diverges
+from the abstract model — an extra transition, a missing guard, a state the
+spec can't reach — the count won't match TLC and the test fails. The code is
+checked against the *actual* state space the model checker found, not a
+hand-picked number.
+
+```sh
+make examples-py                 # run the mirror for all eight
+python3 -m pytest -q examples/tests
+```
+
+Expected: **16 passed** (8 invariant + 8 state-space).
+
 ## How to extend
 
 To add a scenario: create `examples/<Name>.tla` (module name = file name, no
 digit prefixes) and `examples/<Name>.cfg` (the `CONSTANT` values, `Spec`, and
-the `INVARIANT`), run it, append the result to `tlc_output.txt`, and add a row
-to the table above. Keep it to **one property** and a **small** state space —
-that's the point of this collection.
+the `INVARIANT`), run it, append the result to `tlc_output.txt`, add a row to
+the table above, then add a mirror module in `code/` (`initial` / `successors`
+/ `invariant`) and a row in the test's `EXAMPLES` list with the TLC state
+count. Keep it to **one property** and a **small** state space — that's the
+point of this collection.

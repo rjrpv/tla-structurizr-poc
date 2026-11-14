@@ -39,6 +39,8 @@ every request must eventually be answered.**
 │   ├── README.md                 #   what each is, and how to run them
 │   ├── TrafficLight.tla ...      #   8 one-property models (leader election,
 │   ├── *.cfg                     #   inventory, consensus, ...)
+│   ├── code/                     #   Python mirror of each model
+│   ├── tests/                    #   state-space mirror test (the anchor)
 │   └── tlc_output.txt            #   captured TLC runs (all pass)
 ├── code/
 │   ├── reservation/              # Python reference implementation (6 modules)
@@ -82,9 +84,11 @@ election, inventory checking, consensus, and more:
 ```sh
 make examples                          # model-check all eight
 java -jar tla2tools.jar -workers auto examples/LeaderElection   # or one
+make examples-py                       # the Python mirror: state space == TLC
 ```
 
-See [examples/README.md](examples/README.md) for what each is about.
+See [examples/README.md](examples/README.md) for what each is about, and how
+the Python mirror anchors the tests to the models and their state spaces.
 
 ### Code (the mirror)
 
