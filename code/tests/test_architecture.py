@@ -76,10 +76,10 @@ def test_baseline_matches_live_graph():
     """
     import pytest
 
-    from observe import normalize, run_pydeps
+    from observe import live_graph
 
     try:
-        live = normalize(run_pydeps())
+        live = live_graph()
     except SystemExit:
         pytest.skip("pydeps not installed; can't compute the live graph")
     if not BASELINE.exists():

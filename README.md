@@ -36,21 +36,25 @@ every request must eventually be answered.**
 │   ├── ReservationSystem.cfg     # TLC model: 2 tickets, 3 customers
 │   └── tlc_output.txt            # captured TLC run (all properties pass)
 ├── code/
-│   ├── reservation/              # Python reference implementation (4 modules)
-│   │   ├── system.py             #   wires the four modules
+│   ├── reservation/              # Python reference implementation (6 modules)
+│   │   ├── system.py             #   wires the modules
 │   │   ├── intake.py             #   RequestIntake  (owns `pending`)
 │   │   ├── serving.py            #   ServingLogic   (sell/reject decision)
 │   │   ├── inventory.py          #   Inventory      (owns `inventory`)
-│   │   └── ledger.py             #   Ledger         (owns `sold`/`rejected`)
-│   ├── tests/                    # invariants, state-space mirror, well-formedness
-│   ├── observe.py                # pydeps-based architecture observer
-│   ├── baseline.json             # the committed dependency graph (last observed)
+│   │   ├── ledger.py             #   Ledger         (owns `sold`/`rejected`/`canceled`)
+│   │   └── cancellation.py       #   Cancellation   (cancel/refund; restocks)
+│   ├── tests/                    # invariants, state-space mirror, architecture
+│   ├── observe.py                # pydeps observer + acceptance gate
+│   ├── baseline.json             # the committed dependency graph (the accepted state)
 │   └── requirements.txt
+├── .githooks/pre-commit          # keeps baseline.json in sync on commit
+├── .github/workflows/ci.yml      # tests + baseline gate + TLC on every PR
+├── AGENTS.md                     # workflow rules for agents (and humans)
+├── .agents/skills/               # the tla-plus-workflow skill
 └── docs/
     ├── tla-plus.md               # the behavioral half, explained
     ├── comparison.md             # the distinction + complementarity (the crux)
-    ├── code-mirror.md            # how the code is checked against the spec
-    └── delta-diagram.html        # the code->graph delta, advertised in the PR
+    └── code-mirror.md            # how the code is checked against the spec
 ```
 
 ## Quick start
@@ -58,45 +62,65 @@ every request must eventually be answered.**
 ### TLA+ (behavior)
 
 ```sh
-java -cp ~/tools/tla2tools-174.jar tlc2.TLC tla/ReservationSystem
+java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem
 ```
 
 Expected: `Model checking completed. No error has been found.`
-(`NoOversell` and `BoundedSales` invariants hold; `Progress` liveness holds.)
+(`NoOversell` and `BoundedStock` invariants hold; `Progress` liveness holds.)
 
 ### Code (the mirror)
 
 ```sh
 cd code
 python3 -m pip install -r requirements.txt
-python3 -m pytest -q          # 11 tests: invariants, state-space mirror, well-formedness
+python3 -m pytest -q          # 13 tests: invariants, state-space mirror, architecture
 ```
 
-### Architecture (observe, don't gate)
+### Architecture (observe, then accept by merging)
 
 ```sh
-python3 code/observe.py                    # diff the live graph vs baseline
-python3 code/observe.py --pr 2             # post the observation as a PR comment
-python3 code/observe.py --save-baseline    # accept the current state as the baseline
+python3 code/observe.py                    # diff the live graph vs the baseline
+python3 code/observe.py --against main     # diff vs a target branch (a PR's delta)
+python3 code/observe.py --pr 4             # post that delta as a PR comment
+python3 code/observe.py --check            # gate: fail if baseline is out of sync
+python3 code/observe.py --save-baseline    # regenerate the baseline (accept the state)
 ```
+
+Install the pre-commit hook once per clone so the baseline stays in sync:
+`git config core.hooksPath .githooks`.
 
 ## The result
 
-- **TLA+**: TLC explored **29 distinct states** (84 generated) and confirmed all
-  three properties hold. During development it also caught two real modeling
-  bugs (an underspecified action and a terminal-state deadlock) — see
-  [docs/tla-plus.md](docs/tla-plus.md).
-- **Code**: a Python reference implementation passes **11 tests** that check it
+- **TLA+**: TLC explored **75 distinct states** and confirmed all three
+  properties hold. During development it also caught real modeling bugs —
+  including a counterexample showing the old `soldCount` bound was wrong once
+  tickets could be refunded — see [docs/tla-plus.md](docs/tla-plus.md).
+- **Code**: a Python reference implementation passes **13 tests** that check it
   against the spec — the TLA+ invariants (property-based), a state-space mirror
-  (the code explores the same **29** states TLC found), and architecture
+  (the code explores the same **75** states TLC found), and architecture
   well-formedness (no import cycles; the committed baseline is in sync).
-- **Architecture**: `observe.py` runs pydeps over the code and diffs the graph
-  against `baseline.json`. It *observes* drift and advertises it in the PR — it
-  does not block the build. That's the right mode for a project being
-  bootstrapped: course-correct, don't control.
+- **Architecture**: `observe.py` runs pydeps over the code. It *observes* the
+  structural delta (advertised in the PR, against the target branch) and *gates*
+  on the baseline staying in sync with the code (`--check`). **Merging a PR is
+  the act that accepts a structural change** — the baseline is the record of
+  the accepted state. That's the right mode for a project being bootstrapped:
+  course-correct and keep the record honest, don't gate on opinion.
+
+## The acceptance loop
+
+1. **Logic** lives in the TLA+ spec; TLC must pass and any finding is noted in
+   the PR.
+2. **Code** mirrors the spec; the state-space mirror test proves the code
+   explores the same states TLC does.
+3. **Structure** is observed with pydeps; the delta is advertised against the
+   target branch.
+4. **Acceptance** = merging: the pre-commit hook keeps `baseline.json` in sync
+   and CI's `--check` gate blocks a merge if it isn't.
+
+The full rules for agents (and humans) are in [AGENTS.md](AGENTS.md) and
+`.agents/skills/tla-plus-workflow/SKILL.md`.
 
 Read [docs/comparison.md](docs/comparison.md) for the core argument: why TLA+
 and pydeps are **different, not competing**, and how they reinforce each other.
 See [docs/code-mirror.md](docs/code-mirror.md) for how the code is checked
-against the spec, and [docs/delta-diagram.html](docs/delta-diagram.html) for
-what the observed delta looks like in a PR.
+against the spec.

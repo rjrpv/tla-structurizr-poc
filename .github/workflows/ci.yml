@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python tests + baseline gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install -r code/requirements.txt
+      - name: Architecture baseline gate (blocks merge if stale)
+        run: python3 code/observe.py --check
+      - name: Test suite (invariants + state-space mirror + architecture)
+        run: python3 -m pytest -q code/tests
+
+  tla:
+    name: TLA+ model check (invariants hold)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download TLC
+        run: curl -fsSL -o tla2tools.jar https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
+      - name: Model-check the spec
+        run: java -jar tla2tools.jar tlc2.TLC -workers auto tla/ReservationSystem

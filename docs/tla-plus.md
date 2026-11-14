@@ -55,7 +55,7 @@ of deadlocking (see "bugs TLC caught" below).
 | Property | Kind | Meaning |
 |----------|------|---------|
 | `NoOversell` | safety | `inventory >= 0` — stock is never negative |
-| `BoundedSales` | safety | `soldCount <= MaxInventory` — never sell more than we have |
+| `BoundedStock` | safety | `inventory <= MaxInventory` — refunds can't overfill the shelf |
 | `Progress` | liveness | `[]<>(pending = {})` — the queue eventually drains |
 
 `safety` = "something bad never happens"; `liveness` = "something good
@@ -69,24 +69,24 @@ CONSTANT MaxInventory = 2
 CONSTANT Customers = {alice, bob, carol}
 SPECIFICATION Spec
 INVARIANT NoOversell
-INVARIANT BoundedSales
+INVARIANT BoundedStock
 PROPERTY Progress
 ```
 
-A deliberately small model: 2 tickets, 3 customers. TLC explores all 29
+A deliberately small model: 2 tickets, 3 customers. TLC explores all 75
 reachable states in well under a second.
 
 ## Running it
 
 ```sh
-java -cp ~/tools/tla2tools-174.jar tlc2.TLC tla/ReservationSystem
+java -jar tla2tools.jar tlc2.TLC tla/ReservationSystem
 ```
 
 Output (from `tla/tlc_output.txt`):
 
 ```
 Model checking completed. No error has been found.
-84 states generated, 29 distinct states found, 0 states left on queue.
+229 states generated, 75 distinct states found, 0 states left on queue.
 ```
 
 ## Bugs TLC caught during development
@@ -106,6 +106,15 @@ missed:
    enabled — TLC reported *"Error: Deadlock reached."* Fix: add
    `UNCHANGED <<…>>` to `Next` so the system can quiesce.
 
+3. **Wrong abstraction once tickets can be refunded.** Adding `Cancel(c)`
+   (a sold customer cancels; the ticket returns to stock) broke an invariant
+   that looked obviously true — `BoundedSales == soldCount <= MaxInventory`.
+   TLC found a counterexample with `MaxInventory = 2`: alice sells, cancels
+   (ticket back), then carol and bob sell — so **3 sales from 2 tickets** and
+   `soldCount = 3 > 2`. The ticket was *reused*, so a lifetime "ever sold"
+   counter is the wrong abstraction. Fix: drop `soldCount` and bound the
+   stock itself (`NoOversell` + `BoundedStock`), which is the real invariant.
+
 ## Environment notes (this sandbox)
 
 A few quirks of the local toolchain that shaped the spec:
@@ -115,8 +124,8 @@ A few quirks of the local toolchain that shaped the spec:
   `------------------- MODULE ReservationSystem -------------------`.
 - **`#` (cardinality) unsupported.** This TLC build rejects `#s` as a unary
   operator (parse error; `#(s)` gives a bogus semantic error). The spec
-  therefore tracks `soldCount` explicitly, which is also clearer than
-  `#sold`.
+  therefore bounds the stock directly (`inventory <= MaxInventory`) rather
+  than reasoning about set cardinality.
 - **`SPECIFICATION` is a reserved word.** The spec operator is named `Spec`
   (the conventional name) rather than `SPECIFICATION`.
 - **`UNCHANGED VARS`** (bare identifier) failed; the tuple is inlined instead.

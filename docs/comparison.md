@@ -94,7 +94,7 @@ Take the property **"never oversell"**:
 - In **pydeps** it appears only as the edge `serving -> inventory` — a *fact*
   that the serving module imports inventory.
 - In **TLA+** it is the invariant `NoOversell == inventory >= 0` and
-  `BoundedSales == soldCount <= MaxInventory` — *proven* to hold over all 29
+  `BoundedStock == inventory <= MaxInventory` — *proven* to hold over all 75
   reachable states.
 
 The graph says *that* the serving logic touches inventory; the model check says
@@ -112,10 +112,13 @@ architecture to *observing* it:
   code changes, and it silently lies when you don't.
 - A pydeps graph is **derived** — it can't drift from the code, because it
   *is* the code's imports. The only thing that can be stale is the *baseline*
-  (the last observed state), and that's a one-command update.
+  (the accepted state) — and the pre-commit hook regenerates it on commit while
+  CI's `--check` gate blocks a merge if it's out of sync, so it can't silently
+  lie either.
 - For a project being **bootstrapped**, you want to *see* the structure
   evolve, not *constrain* it. pydeps + a baseline is observation; a
-  hand-written model is control. Observation is the right mode here.
+  hand-written model is control. Observation is the right mode here — and
+  **merging is the acceptance** of each structural change.
 
 ## Bottom line
 

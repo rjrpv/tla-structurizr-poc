@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit: keep the architecture baseline in sync with the code.
+#
+# If this commit changes code/reservation/ (the package the observer watches),
+# the committed baseline (code/baseline.json) is regenerated from the working
+# tree and re-staged, so the commit always records the accepted structure.
+#
+# This is the local convenience half of the acceptance loop. The CI gate
+# (code/observe.py --check) enforces the same invariant for everyone, so a
+# commit that skips this hook still can't merge.
+#
+# Install: git config core.hooksPath .githooks
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+PKG="code/reservation"
+BASELINE="code/baseline.json"
+
+# Are any files under the watched package in the index?
+changed="$(git diff --cached --name-only -- "$PKG" || true)"
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+# Regenerate the baseline from the current working tree.
+python3 "$ROOT/code/observe.py" --save-baseline >/dev/null
+
+# Re-stage it so the commit carries the updated baseline.
+git add "$BASELINE"
+
+echo "pre-commit: baseline regenerated for $PKG change" >&2
